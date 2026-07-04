@@ -3,7 +3,7 @@ langgraph
 yfinance
 chromadb
 python-dotenv
-google-generativeai
+anthropic
 tavily-python
 newsapi-python
 pandas
