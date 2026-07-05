@@ -13,16 +13,22 @@ Haber + Finansal Analiz Ajanı
 ## Ürün Açıklaması
 Kullanıcı bir konu veya finansal varlık girer. Sistem birden fazla
 kaynaktan haber toplar, özetler, kaynaklar arası bakış açısı
-farklılıklarını analiz eder. Finansal modda fiyat verisi ve piyasa
-duygu analizi de sunulur.
+farklılıklarını analiz eder. Finansal modda fiyat verisi, teknik
+göstergeler ve piyasa duygu analizi de sunulur. Kullanıcı hesabı
+üzerinden favori konu/varlık takibi, fiyat alarmları ve portföy
+kaydı tutulabilir; uygulama hem web hem mobil üzerinden erişilebilir.
 
 ## Ürün Özellikleri
 - Çoklu kaynaktan otomatik haber toplama
 - Yapay zeka ile haber özetleme
 - Kaynak bazlı bias (bakış açısı) analizi
-- Finansal varlık fiyat grafiği
+- Finansal varlık fiyat grafiği ve teknik göstergeler (RSI, MACD, Bollinger vb.)
 - Piyasa duygu skoru (sentiment analizi)
-- Oturum hafızası ile bağlam kurma
+- Kullanıcı hesabı, favori konu/varlık kaydetme
+- Fiyat alarmları ve portföy takibi
+- Piyasa takvimi (TCMB PPK, TÜİK tarihleri)
+- Oturum ve uzun vadeli hafıza ile bağlam kurma
+- Web ve mobil erişim
 
 ## Hedef Kitle
 - Güncel haberleri takip eden genel kullanıcılar
@@ -51,7 +57,6 @@ Gemini API, ChromaDB, Streamlit, Render.com
   kartlar Epic 3 (Kullanıcı Hesabı), mor kartlar Epic 4 (Hafıza Sistemi), turuncu kartlar
   Epic 5 (Arayüz/Altyapı) olarak renklendirilmiştir. Backlog kolonu ekran görüntüleri:
   ![Sprint 1 Backlog Board 1](ProjectManagement/Sprint1Documents/sprint1-backlog-board-1.png)
-  
 
 - **Daily Scrum:** Toplantılar zaman kısıtları nedeniyle her gün değil, haftada 1-2 kez Slack
   üzerinden yazılı check-in şeklinde yapılmıştır. Ekip üyeleri o gün yaptıkları işi ve varsa
@@ -63,6 +68,7 @@ Gemini API, ChromaDB, Streamlit, Render.com
 - **Ürün Durumu:** Ekran görüntüleri:
   ![Ürün Durumu 1](ProjectManagement/Sprint1Documents/urun-durumu-1.png)
   ![Ürün Durumu 2](ProjectManagement/Sprint1Documents/urun-durumu-2.png)
+  ![Ürün Durumu 3](ProjectManagement/Sprint1Documents/urun-durumu-3.png)
 
 - **Sprint Review:**
   Sprint 1'de ekip, Genel Haber Modu'nun çekirdek akışı üzerinde iki paralel yaklaşımla
@@ -70,8 +76,9 @@ Gemini API, ChromaDB, Streamlit, Render.com
   üretimine kadar uçtan uca çalışan bir prototip geliştirilmiş; diğer yandan projenin uzun
   vadeli mimarisine uygun, modüler bir yapı kurulmuştur: mod seçici arayüz, PRD'ye uygun
   şekilde 5-15 kaynak sınırlı ve gün aralığı filtreli bir haber toplama modülü, ve Claude API
-  ile hem TL;DR özeti hem de embriyonik bir bias (olgu/yorum) puanlaması üreten bir özetleme
-  modülü.
+  ile hem TL;DR özeti hem de her kaynağı olgu/yorum ekseninde 1-10 arası puanlayan bir bias
+  analizi üreten bir özetleme modülü. Bu ikinci yaklaşım test edilmiş ve uçtan uca çalışır
+  durumda olduğu doğrulanmıştır.
 
   Alınan kararlar: İki farklı yapay zeka sağlayıcısının (Gemini ve Claude) paralel
   kullanılmasının karışıklık yarattığı görülmüş, Sprint 2 başında tek bir sağlayıcıya karar
