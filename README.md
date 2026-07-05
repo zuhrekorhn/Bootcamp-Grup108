@@ -69,6 +69,8 @@ Gemini API, ChromaDB, Streamlit, Render.com
   ![Ürün Durumu 1](ProjectManagement/Sprint1Documents/urun-durumu-1.png)
   ![Ürün Durumu 2](ProjectManagement/Sprint1Documents/urun-durumu-2.png)
   ![Ürün Durumu 3](ProjectManagement/Sprint1Documents/urun-durumu-3.png)
+  ![Ürün Durumu 3](ProjectManagement/Sprint1Documents/gemini-urun-durumu-1.jpeg)
+  ![Ürün Durumu 3](ProjectManagement/Sprint1Documents/gemini-urun-durumu-2.jpeg)
 
 - **Sprint Review:**
   Sprint 1'de ekip, Genel Haber Modu'nun çekirdek akışı üzerinde iki paralel yaklaşımla
