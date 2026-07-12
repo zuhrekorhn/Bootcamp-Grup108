@@ -1,4 +1,7 @@
 streamlit==1.58.0
-google-genai==2.10.0
+anthropic
 python-dotenv==1.2.2
 tavily-python==0.7.26
+chromadb
+yfinance
+langgraph

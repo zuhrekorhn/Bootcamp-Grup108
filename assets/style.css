@@ -1,0 +1,20 @@
+.stApp {
+    background-color: #0e1117;
+}
+h1 {
+    background: linear-gradient(90deg, #4f8bf9, #7f5af0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}
+div[data-testid="stSidebar"] {
+    background-color: #161a23;
+}
+.stButton button {
+    border-radius: 8px;
+    border: 1px solid #4f8bf9;
+}
+div[data-testid="stExpander"] {
+    border: 1px solid #2a2f3d;
+    border-radius: 10px;
+}
