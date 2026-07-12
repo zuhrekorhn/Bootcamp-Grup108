@@ -333,6 +333,22 @@ KESİN KURALLAR (istisnasız uygulanmalı):
             st.success(yorum)
             st.caption("⚠️ Bu yorum yalnızca bilgilendirme amaçlıdır ve yatırım tavsiyesi niteliği taşımaz.")
 
+            with st.spinner("📡 İlgili haberler çekiliyor..."):
+                arama_sorgusu = f"{secilen} haberleri güncel"
+                haber_sonucu = tavily_client.search(query=arama_sorgusu, max_results=3)
+
+            if haber_sonucu["results"]:
+                st.markdown("### 📰 İlgili Haberler")
+                for r in haber_sonucu["results"]:
+                    with st.container(border=True):
+                        col1, col2 = st.columns([4, 1])
+                        with col1:
+                            st.markdown(f"**{r['title']}**")
+                            temiz_metin = r['content'][:200].replace("#", "").strip()
+                            st.caption(temiz_metin + "...")
+                        with col2:
+                            st.link_button("Kaynağa Git →", r['url'])
+
             hafizaya_kaydet(secilen, yorum)
 
 # ============ OTOMATİK MOD (AI KARAR VERSİN) ============
