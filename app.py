@@ -266,6 +266,16 @@ elif mod == "💰 Finansal Veri":
 
             st.line_chart(veri["Close"])
 
+            veri_yuvarlanmis = veri[["Open", "High", "Low", "Close"]].round(2)
+
+            csv_veri = veri_yuvarlanmis.to_csv().encode("utf-8")
+            st.download_button(
+                label="📥 Veriyi CSV olarak indir",
+                data=csv_veri,
+                file_name=f"{secilen.replace('/', '_')}_veri.csv",
+                mime="text/csv"
+            )
+
             with st.spinner("🤖 Claude yorumluyor..."):
                 prompt = f"""'{secilen}' enstrümanının son 5 günlük kapanış fiyatları: {veri['Close'].tolist()}.
 Son fiyat {son_fiyat:.2f}, günlük değişim %{degisim_yuzde:.2f}.
@@ -294,12 +304,9 @@ KESİN KURALLAR (istisnasız uygulanmalı):
                 response = claude_client.messages.create(
                     model=CLAUDE_MODEL,
                     max_tokens=1024,
-                    messages=[
-                        {"role": "user", "content": prompt},
-                        {"role": "assistant", "content": "{"}
-                    ],
+                    messages=[{"role": "user", "content": prompt}],
                 )
-                yanit_ham = "{" + next((blok.text for blok in response.content if blok.type == "text"), "")
+                yanit_ham = next((blok.text for blok in response.content if blok.type == "text"), "")
 
                 import json
                 try:
