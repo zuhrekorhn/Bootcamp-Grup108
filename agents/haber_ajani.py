@@ -29,18 +29,33 @@ def haber_ajani(state: dict) -> dict:
 
 2. Her kaynak için AYRI, 2-3 cümlelik, senin kendi cümlelerinle yeniden yazılmış bir özet (orijinal metni kopyalama).
 
+3. Her kaynak için, aşağıdaki 4 ölçülebilir metin özelliğini analiz et (siyasi/ideolojik yargı DEĞİL, sadece metin analizi):
+   - "olgu_yorum_skoru": 0.0 (tamamen somut olgu/veri) ile 1.0 (tamamen yorum/görüş) arası bir sayı
+   - "dogrulama_skoru": 0.0 (tek kaynağa dayanıyor) ile 1.0 (birden fazla kaynak/tanık doğrulamış) arası bir sayı
+   - "atif_turu": Metin resmi bir açıklamaya mı, anonim bir kaynağa mı, yoksa başka bir habere mi dayanıyor? Kısaca belirt (örn. "resmi açıklama", "anonim kaynak", "başka habere dayalı", "belirtilmemiş")
+   - "duygusal_yuzde": Metindeki duygusal yüklü kelime/sıfat/abartı oranını 0-100 arası bir yüzde olarak tahmin et
+
 Yanıtını TAM OLARAK şu JSON formatında ver, öncesinde/sonrasında hiçbir açıklama yazma:
 {{
   "tldr": "...",
-  "kaynak_ozetleri": ["1. kaynağın özeti", "2. kaynağın özeti", "3. kaynağın özeti"]
+  "kaynaklar_analiz": [
+    {{
+      "ozet": "1. kaynağın özeti",
+      "olgu_yorum_skoru": 0.0,
+      "dogrulama_skoru": 0.0,
+      "atif_turu": "...",
+      "duygusal_yuzde": 0
+    }}
+  ]
 }}
 
 Kurallar:
 - Tarafsız, betimleyici bir dil kullan.
 - [ortak nokta] ve [genel tablo] kısımlarında MUTLAKA somut isimler, sayılar, tarihler veya olay adları kullan.
-- Sadece kaynakların ne dediğini sentezle, kendi yorumunu katma.
+- Kaynakları SİYASİ olarak (sağcı/solcu, hükümet yanlısı/muhalif) ASLA etiketleme. Sadece ölçülebilir metin özelliklerine bak.
 - Markdown/başlık kullanma.
 - Sadece geçerli JSON döndür.
+- Yanıtın SADECE ve YALNIZCA {{ karakteriyle başlayıp }} karakteriyle bitmeli. "İşte", "Özet:", "Not:" gibi hiçbir giriş/açıklama cümlesi EKLEME.
 """
     response = claude_client.messages.create(
         model=CLAUDE_MODEL,
@@ -58,10 +73,12 @@ Kurallar:
         bitis = metin.rfind("}") + 1
         veri_json = json.loads(metin[baslangic:bitis])
         tldr = veri_json.get("tldr", ozet_ham)
-        kaynak_ozetleri = veri_json.get("kaynak_ozetleri", [])
+        kaynaklar_analiz = veri_json.get("kaynaklar_analiz", [])
+        json_basarili = True
     except Exception:
         tldr = ozet_ham
-        kaynak_ozetleri = []
+        kaynaklar_analiz = []
+        json_basarili = False
 
     state["sonuc"] = tldr
     state["kaynaklar"] = sonuc["results"]

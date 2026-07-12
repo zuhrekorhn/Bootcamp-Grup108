@@ -124,49 +124,62 @@ if mod == "📰 Genel Haber":
             kaynak_sayisi = len(sonuc["results"])
             prompt = f"""Aşağıda '{konu}' hakkında {kaynak_sayisi} farklı haber kaynağından toplanan başlık ve içerikler var:
 
-{haberler}
+        {haberler}
 
-Şunları üret:
-1. Bir TL;DR özeti, TAM OLARAK şu formatta:
-"Bugün {konu} hakkında {kaynak_sayisi} kaynak incelendi. Kaynakların büyük çoğunluğu [ortak nokta]'yı öne çıkarırken, bazı kaynaklar [varsa ayrışan nokta] üzerine odaklandı. Genel tablo: [1-2 cümle özet]."
+        Şunları üret:
+        1. Bir TL;DR özeti, TAM OLARAK şu formatta:
+        "Bugün {konu} hakkında {kaynak_sayisi} kaynak incelendi. Kaynakların büyük çoğunluğu [ortak nokta]'yı öne çıkarırken, bazı kaynaklar [varsa ayrışan nokta] üzerine odaklandı. Genel tablo: [1-2 cümle özet]."
 
-2. Her kaynak için AYRI, 2-3 cümlelik, senin kendi cümlelerinle yeniden yazılmış bir özet (orijinal metni kopyalama).
+        2. Her kaynak için AYRI, 2-3 cümlelik, senin kendi cümlelerinle yeniden yazılmış bir özet (orijinal metni kopyalama).
 
-Yanıtını TAM OLARAK şu JSON formatında ver, öncesinde/sonrasında hiçbir açıklama yazma:
-{{
-  "tldr": "...",
-  "kaynak_ozetleri": ["1. kaynağın özeti", "2. kaynağın özeti", "3. kaynağın özeti"]
-}}
+        3. Her kaynak için, aşağıdaki 4 ölçülebilir metin özelliğini analiz et (siyasi/ideolojik yargı DEĞİL, sadece metin analizi):
+        - "olgu_yorum_skoru": 0.0 (tamamen somut olgu/veri) ile 1.0 (tamamen yorum/görüş) arası bir sayı
+        - "dogrulama_skoru": 0.0 (tek kaynağa dayanıyor) ile 1.0 (birden fazla kaynak/tanık doğrulamış) arası bir sayı
+        - "atif_turu": Metin resmi bir açıklamaya mı, anonim bir kaynağa mı, yoksa başka bir habere mi dayanıyor? Kısaca belirt (örn. "resmi açıklama", "anonim kaynak", "başka habere dayalı", "belirtilmemiş")
+        - "duygusal_yuzde": Metindeki duygusal yüklü kelime/sıfat/abartı oranını 0-100 arası bir yüzde olarak tahmin et
 
-Kurallar:
-- Tarafsız, betimleyici bir dil kullan.
-- [ortak nokta] ve [genel tablo] kısımlarında MUTLAKA somut isimler, sayılar, tarihler veya olay adları kullan.
-- Sadece kaynakların ne dediğini sentezle, kendi yorumunu katma.
-- Markdown/başlık kullanma.
-- Sadece geçerli JSON döndür.
-"""
+        Yanıtını TAM OLARAK şu JSON formatında ver, öncesinde/sonrasında hiçbir açıklama yazma:
+        {{
+        "tldr": "...",
+        "kaynaklar_analiz": [
+            {{
+            "ozet": "1. kaynağın özeti",
+            "olgu_yorum_skoru": 0.0,
+            "dogrulama_skoru": 0.0,
+            "atif_turu": "...",
+            "duygusal_yuzde": 0
+            }}
+        ]
+        }}
 
+        Kurallar:
+        - Tarafsız, betimleyici bir dil kullan.
+        - [ortak nokta] ve [genel tablo] kısımlarında MUTLAKA somut isimler, sayılar, tarihler veya olay adları kullan.
+        - Kaynakları SİYASİ olarak (sağcı/solcu, hükümet yanlısı/muhalif) ASLA etiketleme. Sadece ölçülebilir metin özelliklerine bak.
+        - Markdown/başlık kullanma.
+        - Sadece geçerli JSON döndür.
+        - Yanıtın SADECE ve YALNIZCA {{ karakteriyle başlayıp }} karakteriyle bitmeli. "İşte", "Özet:", "Not:" gibi hiçbir giriş/açıklama cümlesi EKLEME.
+        """
             response = claude_client.messages.create(
                 model=CLAUDE_MODEL,
                 max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": prompt},
-                    {"role": "assistant", "content": "{"}
-                ],
+                messages=[{"role": "user", "content": prompt}],
             )
-            ozet_ham = "{" + next((blok.text for blok in response.content if blok.type == "text"), "")
+            ozet_ham = next((blok.text for blok in response.content if blok.type == "text"), "")
 
             import json
             try:
                 metin = ozet_ham.strip()
                 baslangic = metin.find("{")
                 bitis = metin.rfind("}") + 1
-                veri = json.loads(metin[baslangic:bitis])
-                tldr = veri.get("tldr", ozet_ham)
-                kaynak_ozetleri = veri.get("kaynak_ozetleri", [])
+                veri_json = json.loads(metin[baslangic:bitis])
+                tldr = veri_json.get("tldr", ozet_ham)
+                kaynaklar_analiz = veri_json.get("kaynaklar_analiz", [])
+                json_basarili = True
             except Exception:
                 tldr = ozet_ham
-                kaynak_ozetleri = []
+                kaynaklar_analiz = []
+                json_basarili = False
 
         st.markdown("### 🤖 Claude Özeti")
         st.success(tldr)
@@ -179,12 +192,53 @@ Kurallar:
                 col1, col2 = st.columns([4, 1])
                 with col1:
                     st.markdown(f"**{r['title']}**")
-                    if i < len(kaynak_ozetleri):
-                        st.write(kaynak_ozetleri[i])
+                    if i < len(kaynaklar_analiz):
+                        st.caption("✅ AI tarafından yeniden yazıldı")
+                        st.write(kaynaklar_analiz[i].get("ozet", ""))
                     else:
-                        st.caption(r['content'][:200] + "...")
+                        st.caption("⚠️ Ham kaynak metni")
+                        temiz_metin = r['content'][:200].replace("#", "").strip()
+                        st.write(temiz_metin + "...")
                 with col2:
                     st.link_button("Kaynağa Git →", r['url'])
+
+        if kaynaklar_analiz:
+            st.markdown("### 🧭 Bakış Açısı Haritası")
+            st.caption("Her nokta bir kaynağı temsil eder. Konum, siyasi görüş değil, sadece metnin ölçülebilir özelliklerini yansıtır.")
+
+            import pandas as pd
+            harita_verisi = []
+            for i, analiz in enumerate(kaynaklar_analiz):
+                if i < len(sonuc["results"]):
+                    harita_verisi.append({
+                        "Kaynak": sonuc["results"][i]["title"][:30],
+                        "Olgu ↔ Yorum": analiz.get("olgu_yorum_skoru", 0.5),
+                        "Tek Kaynak ↔ Çok Kaynaklı": analiz.get("dogrulama_skoru", 0.5),
+                        "Atıf Türü": analiz.get("atif_turu", "belirtilmemiş"),
+                        "Duygusal %": analiz.get("duygusal_yuzde", 0)
+                    })
+
+            if harita_verisi:
+                df = pd.DataFrame(harita_verisi)
+                st.scatter_chart(
+                    df,
+                    x="Olgu ↔ Yorum",
+                    y="Tek Kaynak ↔ Çok Kaynaklı",
+                    size="Duygusal %",
+                    color="Kaynak"
+                )
+
+                with st.expander("📋 Detaylı Analiz Tablosu"):
+                    st.markdown("""
+    **Tabloyu nasıl okumalı?**
+    - **Olgu ↔ Yorum:** 0'a yakınsa kaynak somut olgulara/verilere dayanıyor demektir; 1'e yakınsa yorum/görüş ağırlıklı demektir.
+    - **Tek Kaynak ↔ Çok Kaynaklı:** 0'a yakınsa haber tek bir kaynağa/açıklamaya dayanıyor demektir; 1'e yakınsa birden fazla kaynak/tanık tarafından doğrulanmış demektir.
+    - **Atıf Türü:** Haberin dayandığı kaynağın niteliği (resmi açıklama, anonim kaynak, başka bir habere dayalı vb.)
+    - **Duygusal %:** Metindeki duygusal yüklü kelime ve abartı oranı — yüksekse daha "renkli" bir dil kullanılmış demektir.
+
+    *Bu değerler siyasi bir yargı içermez, sadece metnin ölçülebilir yazım özelliklerini yansıtır.*
+    """)
+                    st.dataframe(df, use_container_width=True)
 
 # ============ FİNANSAL VERİ MODU ============
 elif mod == "💰 Finansal Veri":
