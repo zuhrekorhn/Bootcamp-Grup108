@@ -58,7 +58,6 @@ KESİN KURALLAR (istisnasız uygulanmalı):
         max_tokens=1024,
         messages=[
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "{"}
         ],
     )
     yanit_ham = "{" + next((blok.text for blok in response.content if blok.type == "text"), "")

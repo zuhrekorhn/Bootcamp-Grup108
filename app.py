@@ -64,7 +64,7 @@ if "secili_kayit" in st.session_state:
 # --- MOD SEÇİMİ ---
 mod = st.radio(
     "Mod Seç",
-    ["📰 Genel Haber", "💰 Finansal Veri", "🤖 Otomatik (AI Karar Versin)"],
+    ["📰 Genel Haber", "💰 Finansal Veri", "🤖 Otomatik"],
     horizontal=True,
 )
 
@@ -351,7 +351,7 @@ KESİN KURALLAR (istisnasız uygulanmalı):
 
             hafizaya_kaydet(secilen, yorum)
 
-# ============ OTOMATİK MOD (AI KARAR VERSİN) ============
+# ============ OTOMATİK MOD ============
 else:
     konu = st.text_input(
         "🔍 Konu", placeholder="örn: dolar kuru, enflasyon, Bitcoin", key="oto_konu"

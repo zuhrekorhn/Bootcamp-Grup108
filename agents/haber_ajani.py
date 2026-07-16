@@ -62,11 +62,9 @@ Kurallar:
         max_tokens=1024,
         messages=[
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": "{"}
         ],
     )
-    ozet_ham = "{" + next((blok.text for blok in response.content if blok.type == "text"), "")
-
+    ozet_ham = next((blok.text for blok in response.content if blok.type == "text"), "")
     try:
         metin = ozet_ham.strip()
         baslangic = metin.find("{")
@@ -82,5 +80,5 @@ Kurallar:
 
     state["sonuc"] = tldr
     state["kaynaklar"] = sonuc["results"]
-    state["kaynak_ozetleri"] = kaynak_ozetleri
+    state["kaynaklar_analiz"] = kaynaklar_analiz
     return state
