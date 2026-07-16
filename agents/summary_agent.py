@@ -34,19 +34,24 @@ Görevlerin:
 1. "tldr": Tüm kaynakları sentezleyen, tarafsız, tek paragraflık bir
    "Kısaca Ne Oldu?" özeti yaz. Bu özet kesinlikle yönlendirme, yorum veya
    kendi görüşünü içermemeli; sadece kaynaklarda ortak olan olguları anlat.
-2. "bias_analysis": Her kaynağın başlığını ayrı ayrı değerlendirip,
-   başlığın ne kadar olgu-ağırlıklı (fact) veya yorum-ağırlıklı (opinion)
-   olduğunu 1 ile 10 arasında bir tam sayı ile puanla.
-   1 = Tamamen olgu, tarafsız bir başlık.
-   10 = Tamamen yorum, abartılı veya duygusal bir başlık.
+
+2. "bias_analysis": Her kaynağın başlığını ayrı ayrı, aşağıdaki 4 ölçülebilir
+   metin özelliğine göre değerlendir (siyasi/ideolojik yargı DEĞİL, sadece
+   metin analizi):
+   - "olgu_yorum_skoru": 0.0 (tamamen olgu/veri) ile 1.0 (tamamen yorum/görüş) arası bir sayı.
+   - "dogrulama_skoru": 0.0 (tek kaynağa dayanıyor) ile 1.0 (birden fazla kaynak/tanık doğrulamış) arası bir sayı.
+   - "atif_turu": Başlık resmi bir açıklamaya mı, anonim bir kaynağa mı, yoksa
+     başka bir habere mi dayanıyor? Kısaca belirt (örn. "resmi açıklama",
+     "anonim kaynak", "başka habere dayalı", "belirtilmemiş").
+   - "duygusal_yuzde": Başlıktaki duygusal yüklü kelime/sıfat/abartı oranını
+     0-100 arası bir yüzde olarak tahmin et.
    Anahtar olarak haberin "Kaynak" adını kullan.
 
 Yanıtını SADECE aşağıdaki formatta geçerli bir JSON nesnesi olarak ver.
 Başka hiçbir açıklama, giriş cümlesi veya markdown kod bloğu ekleme:
 
-{"tldr": "...", "bias_analysis": {"Kaynak1": 3, "Kaynak2": 8}}
+{"tldr": "...", "bias_analysis": {"Kaynak1": {"olgu_yorum_skoru": 0.3, "dogrulama_skoru": 0.5, "atif_turu": "resmi açıklama", "duygusal_yuzde": 10}}}
 """
-
 
 def haberleri_analiz_et(haberler: list[dict]) -> dict:
     """

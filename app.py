@@ -10,6 +10,11 @@ fonksiyonlar üzerinden yürütülür.
 """
 
 import streamlit as st
+import chromadb
+import uuid
+
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
+collection = chroma_client.get_or_create_collection(name="analizler")
 
 # --- Ajan fonksiyonlarını içe aktar -----------------------------------------
 # Import sırasında oluşabilecek hataları (eksik paket, .env eksikliği vb.)
@@ -55,6 +60,17 @@ except Exception as e:
     ajan_yukleme_hatasi = str(e)
 
 
+def hafizaya_kaydet(konu, ozet, kullanici_id=None):
+    try:
+        collection.add(
+            documents=[ozet],
+            metadatas=[{"konu": konu, "kullanici_id": str(kullanici_id) if kullanici_id else "misafir"}],
+            ids=[str(uuid.uuid4())]
+        )
+    except Exception:
+        pass
+
+
 # --- Sayfa ayarları ----------------------------------------------------------
 st.set_page_config(
     page_title="Haber + Finansal Analiz Ajanı",
@@ -71,10 +87,45 @@ if AJANLAR_YUKLENDI:
     st.sidebar.markdown("---")
 
 # --- Sidebar / Menü ----------------------------------------------------------
+
+with st.sidebar.expander("Geçmiş Sorgularım"):
+    kullanici = st.session_state.get("kullanici")
+    if not kullanici:
+        st.caption("Geçmiş sorgularınızı görmek için giriş yapın veya hesap oluşturun.")
+    elif AJANLAR_YUKLENDI:
+        try:
+            tum_kayitlar = collection.get()
+            kullanici_id_str = str(kullanici["id"])
+            kendi_kayitlarim = [
+                (i, meta) for i, meta in enumerate(tum_kayitlar["metadatas"])
+                if meta.get("kullanici_id") == kullanici_id_str
+            ]
+            if kendi_kayitlarim:
+                for i, meta in reversed(kendi_kayitlarim):
+                    goruntu_metni = meta['konu'] if len(meta['konu']) <= 30 else meta['konu'][:30] + "..."
+                    if st.button(f"🔎 {goruntu_metni}", key=f"gecmis_{i}", use_container_width=True):
+                        st.session_state["secili_kayit"] = {
+                            "konu": meta["konu"],
+                            "ozet": tum_kayitlar["documents"][i]
+                        }
+                        for anahtar in ["son_analiz", "son_haberler", "son_konu"]:
+                            if anahtar in st.session_state:
+                                del st.session_state[anahtar]
+                        st.rerun()
+            else:
+                st.caption("Henüz sorgu yapılmadı.")
+        except Exception:
+            st.caption("Geçmiş sorgular yüklenemedi.")
+
+if st.session_state.get("onerilen_mod_gecisi"):
+    st.session_state["mod_secimi"] = "Finansal Analiz Modu"
+    del st.session_state["onerilen_mod_gecisi"]
+
 st.sidebar.title("📊 Menü")
 mod = st.sidebar.radio(
     "Bir mod seçin:",
     ("Genel Haber Modu", "Finansal Analiz Modu", "⭐ Favorilerim", "💼 Portföyüm", "📅 Piyasa Takvimi"),
+    key="mod_secimi",
 )
 st.sidebar.markdown("---")
 st.sidebar.caption("Haber + Finansal Analiz Ajanı · Bootcamp Grup 108")
@@ -93,6 +144,16 @@ if not AJANLAR_YUKLENDI:
 # GENEL HABER MODU
 # =============================================================================
 if mod == "Genel Haber Modu":
+    if st.session_state.get("secili_kayit"):
+        secili = st.session_state["secili_kayit"]
+        st.markdown("---")
+        st.subheader(f"📌 Geçmiş Sorgu: {secili['konu']}")
+        st.info(secili["ozet"])
+        if st.button("✕ Kapat"):
+            del st.session_state["secili_kayit"]
+            st.rerun()
+        st.markdown("---")
+
     st.subheader("🔍 Genel Haber Modu")
     st.write(
         "Bir konu girin; ilgili son haberler toplanıp tarafsız bir özet ve "
@@ -110,11 +171,26 @@ if mod == "Genel Haber Modu":
 
     col_input, col_button = st.columns([4, 1])
     with col_input:
+
+        
         konu = st.text_input(
             "Aranacak konu",
             placeholder="Örn: Yapay Zeka, Merkez Bankası faiz kararı...",
             label_visibility="collapsed",
         )
+
+        if AJANLAR_YUKLENDI and konu and konu.strip():
+            from agents.router import konu_varlik_eslestir
+            eslesme = konu_varlik_eslestir(konu)
+            if eslesme:
+                kategori_bulunan, varlik_adi, ticker, finansal_sorgu = eslesme
+                st.info(f"💡 **'{konu}'** finansal bir konu gibi görünüyor. Daha detaylı analiz için Finansal Analiz Modu'nu deneyebilirsiniz.")
+                if st.button(f"📊 Finansal Analiz Modu'na Geç"):
+                    st.session_state["onerilen_mod_gecisi"] = True
+                    st.session_state["onerilen_kategori"] = kategori_bulunan
+                    st.session_state["onerilen_varlik"] = varlik_adi
+                    st.rerun()
+
     with col_button:
         analiz_et = st.button("🔎 Analiz Et", use_container_width=True)
 
@@ -144,6 +220,8 @@ if mod == "Genel Haber Modu":
                             sorgu_kaydet(kullanici["id"], konu)
                         except Exception:
                             pass  # sorgu geçmişi kaydı opsiyoneldir, analiz sonucunu etkilemez
+
+                        hafizaya_kaydet(konu, analiz.get("tldr", ""), kullanici_id=kullanici["id"])
 
             except ValueError as e:
                 st.error(f"🚫 Geçersiz girdi: {e}")
@@ -178,17 +256,54 @@ if mod == "Genel Haber Modu":
 
         bias_analysis = analiz.get("bias_analysis", {})
         if bias_analysis:
-            st.markdown("### 🎯 Kaynak Bazlı Olgu / Yorum Analizi")
-            st.caption("1 = Tamamen olgu, tarafsız  ·  10 = Tamamen yorum, abartılı")
+            st.markdown("### 🧭 Bakış Açısı Haritası")
+            st.caption("Her nokta bir kaynağı temsil eder. Konum, siyasi görüş değil, sadece metnin ölçülebilir özelliklerini yansıtır.")
 
-            kaynaklar = list(bias_analysis.items())
-            sutun_sayisi = 4
-            for i in range(0, len(kaynaklar), sutun_sayisi):
-                satir = kaynaklar[i : i + sutun_sayisi]
-                columns = st.columns(sutun_sayisi)
-                for col, (kaynak, puan) in zip(columns, satir):
-                    etiket = "Yorum ağırlıklı" if puan >= 6 else "Olgu ağırlıklı"
-                    col.metric(label=kaynak, value=f"{puan} / 10", delta=etiket, delta_color="off")
+            import pandas as pd
+            harita_verisi = []
+            for kaynak, metrikler in bias_analysis.items():
+                if isinstance(metrikler, dict):
+                    harita_verisi.append({
+                        "Kaynak": kaynak[:30],
+                        "Olgu ↔ Yorum": metrikler.get("olgu_yorum_skoru", 0.5),
+                        "Tek Kaynak ↔ Çok Kaynaklı": metrikler.get("dogrulama_skoru", 0.5),
+                        "Atıf Türü": metrikler.get("atif_turu", "belirtilmemiş"),
+                        "Duygusal %": metrikler.get("duygusal_yuzde", 0)
+                    })
+
+            if harita_verisi:
+                df = pd.DataFrame(harita_verisi)
+
+                en_yorum_agirlikli = df.loc[df["Olgu ↔ Yorum"].idxmax()]
+                en_olgu_agirlikli = df.loc[df["Olgu ↔ Yorum"].idxmin()]
+                en_duygusal = df.loc[df["Duygusal %"].idxmax()]
+
+                st.info(
+                    f"📌 Bu {len(df)} kaynak arasında, **{en_yorum_agirlikli['Kaynak']}** en yorum-ağırlıklı "
+                    f"(skor: {en_yorum_agirlikli['Olgu ↔ Yorum']:.2f}) ve en duygusal dili kullanan "
+                    f"(**{en_duygusal['Kaynak']}**, %{en_duygusal['Duygusal %']:.0f}) kaynak oldu. "
+                    f"**{en_olgu_agirlikli['Kaynak']}** ise en olgu-ağırlıklı (skor: {en_olgu_agirlikli['Olgu ↔ Yorum']:.2f}), "
+                    f"en nesnel dili kullanan kaynaktı."
+                )
+                st.scatter_chart(
+                    df,
+                    x="Olgu ↔ Yorum",
+                    y="Tek Kaynak ↔ Çok Kaynaklı",
+                    size="Duygusal %",
+                    color="Kaynak"
+                )
+
+                with st.expander("📋 Detaylı Analiz Tablosu"):
+                    st.markdown("""
+**Tabloyu nasıl okumalı?**
+- **Olgu ↔ Yorum:** 0'a yakınsa kaynak somut olgulara/verilere dayanıyor demektir; 1'e yakınsa yorum/görüş ağırlıklı demektir.
+- **Tek Kaynak ↔ Çok Kaynaklı:** 0'a yakınsa haber tek bir kaynağa/açıklamaya dayanıyor demektir; 1'e yakınsa birden fazla kaynak/tanık tarafından doğrulanmış demektir.
+- **Atıf Türü:** Haberin dayandığı kaynağın niteliği (resmi açıklama, anonim kaynak, başka bir habere dayalı vb.)
+- **Duygusal %:** Metindeki duygusal yüklü kelime ve abartı oranı — yüksekse daha "renkli" bir dil kullanılmış demektir.
+
+*Bu değerler siyasi bir yargı içermez, sadece metnin ölçülebilir yazım özelliklerini yansıtır.*
+""")
+                    st.dataframe(df, use_container_width=True)
 
         if haberler:
             with st.expander(f"📰 Kaynak Haberler ({len(haberler)} adet)"):
@@ -220,7 +335,10 @@ elif mod == "Finansal Analiz Modu":
     if AJANLAR_YUKLENDI:
         col_kategori, col_varlik = st.columns(2)
         with col_kategori:
-            kategori = st.selectbox("Varlık kategorisi", TUM_KATEGORILER)
+            varsayilan_kategori_index = 0
+            if st.session_state.get("onerilen_kategori") in TUM_KATEGORILER:
+                varsayilan_kategori_index = TUM_KATEGORILER.index(st.session_state["onerilen_kategori"])
+            kategori = st.selectbox("Varlık kategorisi", TUM_KATEGORILER, index=varsayilan_kategori_index, key="finans_kategori_secim")
 
         with col_varlik:
             if kategori in SERBEST_SEMBOL_KATEGORILERI:
@@ -233,7 +351,11 @@ elif mod == "Finansal Analiz Modu":
                     ticker = f"{sembol}{SERBEST_SEMBOL_KATEGORILERI[kategori]['ticker_eki']}"
                     finansal_sorgu = SERBEST_SEMBOL_KATEGORILERI[kategori]["sorgu_sablonu"].format(sembol=sembol)
             else:
-                secilen_varlik_adi = st.selectbox("Varlık", list(VARLIK_LISTESI[kategori].keys()))
+                varlik_listesi_bu_kategori = list(VARLIK_LISTESI[kategori].keys())
+                varsayilan_varlik_index = 0
+                if st.session_state.get("onerilen_varlik") in varlik_listesi_bu_kategori:
+                    varsayilan_varlik_index = varlik_listesi_bu_kategori.index(st.session_state["onerilen_varlik"])
+                secilen_varlik_adi = st.selectbox("Varlık", varlik_listesi_bu_kategori, index=varsayilan_varlik_index, key="finans_varlik_secim")
                 ticker = VARLIK_LISTESI[kategori][secilen_varlik_adi]["ticker"]
                 finansal_sorgu = VARLIK_LISTESI[kategori][secilen_varlik_adi]["sorgu"]
 
