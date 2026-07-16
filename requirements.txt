@@ -7,3 +7,4 @@ anthropic
 tavily-python
 newsapi-python
 pandas
+bcrypt
