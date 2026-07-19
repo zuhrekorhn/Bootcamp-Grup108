@@ -40,7 +40,7 @@ Python, LangGraph, Tavily API, NewsAPI,
 Gemini API, ChromaDB, Streamlit, Render.com
 
 ## Product Backlog
-[Sprint 1 Miro Board](https://miro.com/welcomeonboard/RktwR1FoL0lQdnV6dG0zSzU0SUNlaGUrWHJRWnJkU2ErTnVaYWJDR0xjNTVMVkFVSDhXRFpMWDlhNEtXQXNMZU1RMmpUS01BOTdsTjRnbmtlYis2czZxVkRqa2VVektxdUlOM2c0MllPZmYxSGpVS3lsaEFvOFZGckYreUZGaEVBS2NFMDFkcUNFSnM0d3FEN050ekl3PT0hdjE=?share_link_id=980797653059)
+[Proje Yönetimi => Miro Board](https://miro.com/welcomeonboard/RktwR1FoL0lQdnV6dG0zSzU0SUNlaGUrWHJRWnJkU2ErTnVaYWJDR0xjNTVMVkFVSDhXRFpMWDlhNEtXQXNMZU1RMmpUS01BOTdsTjRnbmtlYis2czZxVkRqa2VVektxdUlOM2c0MllPZmYxSGpVS3lsaEFvOFZGckYreUZGaEVBS2NFMDFkcUNFSnM0d3FEN050ekl3PT0hdjE=?share_link_id=980797653059)
 
 ---
 
@@ -58,7 +58,7 @@ Gemini API, ChromaDB, Streamlit, Render.com
   Epic 5 (Arayüz/Altyapı) olarak renklendirilmiştir. Backlog kolonu ekran görüntüleri:
   ![Sprint 1 Backlog Board 1](ProjectManagement/Sprint1Documents/sprint1-backlog-board-1.png)
 
-- **Daily Scrum:** Toplantılar zaman kısıtları nedeniyle her gün değil, haftada 1-2 kez Slack
+- **Daily Scrum:** Toplantılar zaman kısıtları nedeniyle her gün değil, haftada 1-2 kez WhatsApp
   üzerinden yazılı check-in şeklinde yapılmıştır. Ekip üyeleri o gün yaptıkları işi ve varsa
   engelleri kısaca paylaşmıştır.
 
@@ -98,9 +98,66 @@ Gemini API, ChromaDB, Streamlit, Render.com
     yürütülmesine karar verilmiştir.
 
 ---
-
 # Sprint 2
 
+**Sprint Süresi:** 6 Temmuz 2026 – 19 Temmuz 2026
+
+- **Backlog düzeni ve Story seçimleri:** Sprint 2'nin odağı Finansal Analiz Modu'nun
+  tamamı, kullanıcı hesabı/kişiselleştirme katmanı ve uzun vadeli hafıza sistemiydi.
+  Kapsama alınan story'ler: varlık seçimi, fiyat verisi ve teknik göstergeler, finansal
+  haber akışı, piyasa duygu analizi, sade dil özeti, fiyat alarmları, portföy takibi,
+  piyasa takvimi, hesap/giriş sistemi, favori kaydetme, oturum ve kullanıcı tercih
+  hafızası. Ayrıca Sprint 1'den devreden Bakış Açısı Haritası (bias analizi) da bu
+  sprint'te tamamlandı. Dışa aktarma, uygulama içi not alma, sorgu cache'i, konu/haber
+  alarmları ve mobil uyumluluk kapsam dışı bırakılıp backlog'da bekletildi. Backlog
+  kolonu ve genel board görünümü:
+  ![Sprint 2 Board Genel 1](ProjectManagement/Sprint2Documents/sprint2-board-genel1.png)
+  ![Sprint 2 Board Genel 2](ProjectManagement/Sprint2Documents/sprint2-board-genel2.png)
+
+- **Daily Scrum:** Sprint 1'de olduğu gibi, toplantılar haftada 1-2 kez WhatsApp üzerinden
+  yazılı check-in şeklinde sürdürüldü.
+
+- **Sprint board update:** Board'un genel görünümü yukarıdaki görsellerde yer almaktadır.
+
+- **Ürün Durumu:** Ekran görüntüleri:
+  ![Ürün Durumu 1](ProjectManagement/Sprint2Documents/urun-durumu-1.png)
+  ![Ürün Durumu 2](ProjectManagement/Sprint2Documents/urun-durumu-2.png)
+  ![Ürün Durumu 3](ProjectManagement/Sprint2Documents/urun-durumu-3.png)
+  ![Ürün Durumu 4](ProjectManagement/Sprint2Documents/urun-durumu-4.png)
+  ![Ürün Durumu 5](ProjectManagement/Sprint2Documents/urun-durumu-5.png)
+  ![Ürün Durumu 6](ProjectManagement/Sprint2Documents/urun-durumu-6.png)
+  ![Ürün Durumu 7](ProjectManagement/Sprint2Documents/urun-durumu-7.png)
+  ![Ürün Durumu 8](ProjectManagement/Sprint2Documents/urun-durumu-8.png)
+  ![Ürün Durumu 9](ProjectManagement/Sprint2Documents/urun-durumu-9.png)
+
+- **Sprint Review:**
+  Sprint 2'de Finansal Analiz Modu uçtan uca tamamlandı: varlık kategorisi/varlık
+  seçimi, zaman dilimi ve teknik gösterge (RSI, MACD, Bollinger Bantları, MA200,
+  Stokastik Osilatör) seçenekleriyle fiyat grafiği, destek/direnç seviyeleri, varlık
+  odaklı haber akışı ve piyasa duygu skoru tek ekranda birleştirildi; sabit yasal uyarı
+  metni her finansal ekranın altında sabit olarak yer alıyor. Kullanıcı hesabı (e-posta
+  ile kayıt/giriş, şifreler hashlenerek saklanıyor) ve buna bağlı favori, fiyat alarmı
+  ve portföy takibi özellikleri de tamamlandı; portföy ekranı güncel fiyatlarla kâr/zarar
+  hesaplıyor. Piyasa takvimi TCMB PPK ve TÜİK enflasyon açıklamaları için yaklaşık
+  tarihler üretiyor ve hatırlatma kurulmasına izin veriyor — kesin tarihlerin ilgili
+  kurumların resmi takviminden girilmesi gerektiği not edildi. Ayrıca Sprint 1'den
+  devreden Bakış Açısı Haritası, dört ölçülebilir metrikle (olgu/yorum skoru,
+  doğrulama skoru, atıf türü, duygusal yüzde) ve iki eksenli bir görselle tamamlandı.
+
+  Alınan kararlar: Kaynakların "kart" formatında (ayrı kutular, favori/not ikonları)
+  gösterimi hâlâ tamamlanmadı, bu story bir sonraki sprint'e aktarıldı. Dışa aktarma,
+  uygulama içi not alma, sorgu cache'i, konu/haber alarmları ve mobil uyumluluk henüz
+  ele alınmadı, backlog'da bekliyor. Geliştirilen kodun ana branch'e (main) taşınmasının
+  Sprint 3'ün ilk işi olmasına karar verildi.
+
+  Sprint Review katılımcıları: Tüm takım.
+
+- **Sprint Retrospective:**
+  - Bu sprint'te kapsamın büyük bölümü tamamlandı; kalan story'lerin sınırlı sayıda ve
+    net olması Sprint 3'ün planlanmasını kolaylaştırıyor.
+  - Board güncellemesinin sprint ortasında da düzenli kontrol edilmesine karar verildi.
+  - Sprint 3'te öncelik geliştirilen kodun ana branch'e taşınması ve kaynak kartı
+    tasarımının tamamlanması olacak.
 
 ---
 
