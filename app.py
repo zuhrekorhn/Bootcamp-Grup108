@@ -214,12 +214,28 @@ if mod == "Genel Haber Modu":
                     st.warning("Bu konuyla ilgili haber bulunamadı. Başka bir konu deneyin.")
                 else:
                     with st.spinner("Haberler Claude tarafından analiz ediliyor..."):
-                        analiz = haberleri_analiz_et(haberler)
+                        analiz = haberleri_analiz_et(haberler, konu)
+
+                    genis_arama_yapildi = False
+                    # Sonuçlar alakasız çıktıysa (bias_analysis boş döndüyse), daha geniş
+                    # bir tarih aralığıyla tekrar dene.
+                    if not analiz.get("bias_analysis"):
+                        with st.spinner(f"Son 3 günde sonuç bulunamadı, son 30 gün taranıyor..."):
+                            haberler_genis = haberleri_getir(konu, gun_araligi=30)
+                        if haberler_genis:
+                            with st.spinner("Genişletilmiş sonuçlar analiz ediliyor..."):
+                                analiz_genis = haberleri_analiz_et(haberler_genis, konu)
+                            if analiz_genis.get("bias_analysis"):
+                                haberler = haberler_genis
+                                analiz = analiz_genis
+                                genis_arama_yapildi = True
 
                     # Sonraki yeniden çalıştırmalarda (rerun) kaybolmaması için sakla
                     st.session_state["son_konu"] = konu
                     st.session_state["son_haberler"] = haberler
                     st.session_state["son_analiz"] = analiz
+                    st.session_state["genis_arama_yapildi"] = genis_arama_yapildi
+
 
                     if kullanici:
                         try:
@@ -274,7 +290,9 @@ if mod == "Genel Haber Modu":
                 except Exception:
                     st.error("😕 Favorilere eklenirken bir sorun oluştu.")
                     
-        
+        if st.session_state.get("genis_arama_yapildi"):
+            st.caption("ℹ️ Son 3 günde yeterli haber bulunamadığı için arama son 30 güne genişletildi.")
+
 
         st.markdown("### 📌 Kısaca Ne Oldu?")
         st.info(analiz.get("tldr", "Özet oluşturulamadı."))

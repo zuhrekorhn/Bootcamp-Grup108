@@ -28,16 +28,28 @@ MODEL = "claude-opus-4-8"
 # Claude'a verilecek sistem talimatı: tarafsızlık ve JSON formatı zorunluluğu
 SYSTEM_PROMPT = """\
 Sen tarafsız bir haber analisti ve medya okuryazarlığı uzmanısın.
-Sana bir haber listesi verilecek. Her haberin "Kaynak" ve "Başlık" bilgisi olacak.
+Sana bir KONU ve o konu için toplanmış bir haber listesi verilecek. Her haberin
+"Kaynak" ve "Başlık" bilgisi olacak.
+
+ÖNEMLİ: Haber listesi bir arama motorundan geliyor ve bazı haberler KONU ile
+alakasız olabilir (arama motoru yeterli sonuç bulamadığında alakasız/genel
+gündem haberleri döndürebilir). İlk işin, her haberin başlığının KONU ile
+gerçekten ilgili olup olmadığını değerlendirmek.
 
 Görevlerin:
-1. "tldr": Tüm kaynakları sentezleyen, tarafsız, tek paragraflık bir
-   "Kısaca Ne Oldu?" özeti yaz. Bu özet kesinlikle yönlendirme, yorum veya
-   kendi görüşünü içermemeli; sadece kaynaklarda ortak olan olguları anlat.
+1. "tldr":
+   - Eğer haberlerin çoğu KONU ile gerçekten ilgiliyse: sadece ilgili
+     kaynakları sentezleyen, tarafsız, tek paragraflık bir "Kısaca Ne Oldu?"
+     özeti yaz. Bu özet kesinlikle yönlendirme, yorum veya kendi görüşünü
+     içermemeli; sadece kaynaklarda ortak olan olguları anlat.
+   - Eğer haberlerin çoğu (yarısından fazlası) KONU ile alakasızsa: SADECE
+     şunu yaz: "'{KONU}' konusuyla ilgili yeterli/güncel haber bulunamadı.
+     Arama sonuçları alakasız içerik döndürdü."
 
-2. "bias_analysis": Her kaynağın başlığını ayrı ayrı, aşağıdaki 4 ölçülebilir
-   metin özelliğine göre değerlendir (siyasi/ideolojik yargı DEĞİL, sadece
-   metin analizi):
+2. "bias_analysis": SADECE KONU ile gerçekten ilgili olan haberlerin
+   başlığını ayrı ayrı, aşağıdaki 4 ölçülebilir metin özelliğine göre
+   değerlendir (siyasi/ideolojik yargı DEĞİL, sadece metin analizi).
+   Alakasız haberleri bias_analysis'e hiç dahil etme.
    - "olgu_yorum_skoru": 0.0 (tamamen olgu/veri) ile 1.0 (tamamen yorum/görüş) arası bir sayı.
    - "dogrulama_skoru": 0.0 (tek kaynağa dayanıyor) ile 1.0 (birden fazla kaynak/tanık doğrulamış) arası bir sayı.
    - "atif_turu": Başlık resmi bir açıklamaya mı, anonim bir kaynağa mı, yoksa
@@ -53,7 +65,7 @@ Başka hiçbir açıklama, giriş cümlesi veya markdown kod bloğu ekleme:
 {"tldr": "...", "bias_analysis": {"Kaynak1": {"olgu_yorum_skoru": 0.3, "dogrulama_skoru": 0.5, "atif_turu": "resmi açıklama", "duygusal_yuzde": 10}}}
 """
 
-def haberleri_analiz_et(haberler: list[dict]) -> dict:
+def haberleri_analiz_et(haberler: list[dict], konu: str) -> dict:
     """
     Verilen haber listesini Claude API'ye gönderip analiz sonucunu döndürür.
 
@@ -77,7 +89,7 @@ def haberleri_analiz_et(haberler: list[dict]) -> dict:
 
     # Haber listesini modelin okuyabileceği bir metne dönüştür
     haber_metni = json.dumps(haberler, ensure_ascii=False, indent=2)
-    kullanici_mesaji = f"Aşağıdaki haber listesini analiz et:\n\n{haber_metni}"
+    kullanici_mesaji = f"KONU: {konu}\n\nAşağıdaki haber listesini analiz et:\n\n{haber_metni}"
 
     try:
         yanit = client.messages.create(
@@ -123,7 +135,7 @@ if __name__ == "__main__":
     ]
 
     try:
-        sonuc = haberleri_analiz_et(ornek_haberler)
+        sonuc = haberleri_analiz_et(ornek_haberler, konu="Merkez Bankası faiz kararı")
         print(json.dumps(sonuc, ensure_ascii=False, indent=2))
     except Exception as e:
         print(f"Hata: {e}")
